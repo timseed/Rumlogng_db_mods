@@ -26,11 +26,20 @@ CREATE TABLE BMS (bid Integer NOT NULL, mid Integer NOT NULL, sid Integer NOT NU
 
       -- CONFIRMED_VIEW source
 
-CREATE VIEW CONFIRMED_VIEW as select  distinct l.dxcc, l.dxccadif, m.mid,l.mode,s.sid,s.name , l.lotwqsl, l.band  from logbook l ,Mode m, Status s, Band b  where m.name=l.mode and b.name=l.band and s.code = l.lotwqsl and s.name="CONFIRMED" ORDER BY 1,2,3,4,5,6,7,8
+CREATE VIEW CONFIRMED_VIEW as select  distinct l.dxcc, l.dxccadif, m.mid,l.mode,s.sid,s.name , l.lotwqsl, l.band  from 
+    logbook l ,Mode m, Status s, Band b  
+    where m.logname=l.mode and 
+    b.name=l.band and 
+    s.code = l.lotwqsl and 
+    s.name="CONFIRMED" ORDER BY 1,2,3,4,5,6,7,8
 /* COFN_VIEW(dxccadif,mid,mode,sid,name,lotwqsl,band) */;
 
 
-CREATE VIEW UNCONFIRMED_VIEW as select  distinct l.dxcc, l.dxccadif, m.mid,l.mode,s.sid,s.name , l.lotwqsl, l.band  from logbook l ,Mode m, Status s, Band b  where m.name=l.mode and b.name=l.band and s.code = l.lotwqsl and s.name="NOT CONFIRMED" ORDER BY 1,2,3,4,5,6,7,8
+CREATE VIEW UNCONFIRMED_VIEW as select  distinct l.dxcc, l.dxccadif, m.mid,l.mode,s.sid,s.name , l.lotwqsl, l.band  from 
+      logbook l ,Mode m, Status s, Band b  
+      where m.logname=l.mode and 
+      b.name=l.band and 
+      s.code = l.lotwqsl and s.name="NOT CONFIRMED" ORDER BY 1,2,3,4,5,6,7,8
 /* UNCOFN_VIEW(dxccadif,mid,mode,sid,name,lotwqsl,band) */;
 
 create view dxcc_status as
@@ -49,7 +58,11 @@ create view BMS_VIEW as select distinct dx.dxcc, bm.dxccadif,bm.mid, m.name, bm.
 		s.sid = bm.sid and 
 		bm.mid  = m.mid order by b.bid,m.mid;
 
-create view CONFIRMED_VIEW_BMS as select  distinct b.bid , m.mid ,s.sid, l.dxccadif  from logbook l ,Mode m, Status s, Band b  where m.name=l.mode and b.name=l.band and s.code = l.lotwqsl and s.name="CONFIRMED" ORDER BY 1,2,3,4;
+create view CONFIRMED_VIEW_BMS as select  distinct b.bid , m.mid ,s.sid, l.dxccadif  from 
+    logbook l ,Mode m, Status s, Band b  where m.logname=l.mode and 
+          b.name=l.band and 
+          s.code = l.lotwqsl and 
+          s.name="CONFIRMED" ORDER BY 1,2,3,4;
 create view UNCONFIRMED_VIEW_BMS as select  distinct b.bid , m.mid ,s.sid, l.dxccadif  from logbook l ,Mode m, Status s, Band b  where m.name=l.mode and b.name=l.band and s.code = l.lotwqsl and s.name!="CONFIRMED" ORDER BY 1,2,3,4;
 create view BMS_STATUS_VIEW as select bid,mid,max(sid) as sid,dxccadif  from UNCONFIRMED_VIEW_BMS uvb union all select * from CONFIRMED_VIEW_BMS cvb union all select * from BMS b  group by 
 	bid,mid,dxccadif order by 4,1,2,3;
