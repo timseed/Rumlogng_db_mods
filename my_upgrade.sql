@@ -2,16 +2,12 @@ DROP TABLE IF EXISTS Band;
 DROP TABLE IF EXISTS Mode;
 DROP TABLE IF EXISTS Status;
 DROP TABLE IF EXISTS BMS;
-DROP VIEW  IF EXISTS UNCONFIRMED_VIEW;
-DROP VIEW  IF EXISTS CONFIRMED_VIEW;
-DROP VIEW  IF EXISTS NEED_TO_CONFIRM;
-DROP VIEW  IF EXISTS DXCC_STATUS;
 DROP VIEW  IF EXISTS MISSING_MODES;
 DROP VIEW  IF EXISTS BMS_VIEW;
 DROP VIEW  IF EXISTS CONFIRMED_VIEW_BMS ;
 DROP VIEW  IF EXISTS UNCONFIRMED_VIEW_BMS ;
 DROP VIEW  IF EXISTS BMS_STATUS_VIEW;
-DROP VIEW  IF EXISTS BMS_STATUS_VIEW_HUMAN;
+DROP VIEW  IF EXISTS DX_STATUS;
 
 create table Band (bid Integer, name VarChar, Primary Key (bid DESC));
 create table Mode (pid Integer,mid Integer,logname Varchar, name VarChar, Primary Key (pid DESC));
@@ -26,29 +22,6 @@ CREATE TABLE BMS (bid Integer NOT NULL, mid Integer NOT NULL, sid Integer NOT NU
 
       -- CONFIRMED_VIEW source
 
-CREATE VIEW CONFIRMED_VIEW as select  distinct l.dxcc, l.dxccadif, m.mid,l.mode,s.sid,s.name , l.lotwqsl, l.band  from 
-    logbook l ,Mode m, Status s, Band b  
-    where m.logname=l.mode and 
-    b.name=l.band and 
-    s.code = l.lotwqsl and 
-    s.name="CONFIRMED" ORDER BY 1,2,3,4,5,6,7,8
-/* COFN_VIEW(dxccadif,mid,mode,sid,name,lotwqsl,band) */;
-
-
-CREATE VIEW UNCONFIRMED_VIEW as select  distinct l.dxcc, l.dxccadif, m.mid,l.mode,s.sid,s.name , l.lotwqsl, l.band  from 
-      logbook l ,Mode m, Status s, Band b  
-      where m.logname=l.mode and 
-      b.name=l.band and 
-      s.code = l.lotwqsl and s.name="NOT CONFIRMED" ORDER BY 1,2,3,4,5,6,7,8
-/* UNCOFN_VIEW(dxccadif,mid,mode,sid,name,lotwqsl,band) */;
-
-create view dxcc_status as
-select * from (select * from CONFIRMED_VIEW cv  UNION ALL
- select * from UNCONFIRMED_VIEW uv where not exists (select * from CONFIRMED_VIEW cv where cv.dxccadif==uv.dxccadif and cv.mid == uv.mid and cv.     band = uv.band))
-  order by dxcc, mode,band,name;
-
-CREATE VIEW NEED_TO_CONFIRM AS  select * from UNCONFIRMED_VIEW uv where not exists (select * from CONFIRMED_VIEW cv where uv.dxcc == cv.dxcc and uv.mid == cv.mid and uv.band == cv.band);
-
 CREATE VIEW MISSING_MODES as      
     SELECT MODE FROM logbook l WHERE NOT EXISTS (SELECT * from Mode m where m.logname=l.mode);
 
@@ -58,16 +31,27 @@ create view BMS_VIEW as select distinct dx.dxcc, bm.dxccadif,bm.mid, m.name, bm.
 		s.sid = bm.sid and 
 		bm.mid  = m.mid order by b.bid,m.mid;
 
-create view CONFIRMED_VIEW_BMS as select  distinct b.bid , m.mid ,s.sid, l.dxccadif  from 
-    logbook l ,Mode m, Status s, Band b  where m.logname=l.mode and 
-          b.name=l.band and 
-          s.code = l.lotwqsl and 
-          s.name="CONFIRMED" ORDER BY 1,2,3,4;
-create view UNCONFIRMED_VIEW_BMS as select  distinct b.bid , m.mid ,s.sid, l.dxccadif  from logbook l ,Mode m, Status s, Band b  where m.name=l.mode and b.name=l.band and s.code = l.lotwqsl and s.name!="CONFIRMED" ORDER BY 1,2,3,4;
-create view BMS_STATUS_VIEW as select bid,mid,max(sid) as sid,dxccadif  from UNCONFIRMED_VIEW_BMS uvb union all select * from CONFIRMED_VIEW_BMS cvb union all select * from BMS b  group by 
+create view CONFIRMED_VIEW_BMS as  select bid as bid, mid as mid ,max(sid) as sid, dxccadif as dxccadif from (select  b.bid , m.mid ,s.sid, l.dxccadif  from logbook l ,Mode m, Status s, Band b  where 
+			m.logname=l.mode and
+			b.name=l.band and 
+			s.code = l.lotwqsl and s.name="CONFIRMED" 
+			union all  select * from BMS bms ) as X
+		group by bid,mid, dxccadif 
+	order by bid,mid,max(sid),dxccadif;
+
+create view UNCONFIRMED_VIEW_BMS as select bid as bid, mid as mid ,max(sid) as sid, dxccadif as dxccadif from (select  b.bid , m.mid ,s.sid, l.dxccadif  from logbook l ,Mode m, Status s, Band b  where 
+			m.logname=l.mode and
+			b.name=l.band and 
+			s.code = l.lotwqsl and s.name!="CONFIRMED" 
+			union all  select * from BMS bms ) as X
+		group by bid,mid, dxccadif 
+	order by bid,mid,max(sid),dxccadif;
+
+
+create view BMS_STATUS_VIEW as select bid as bid,mid as mid ,max(sid) as sid,dxccadif as dxccadif  from (select * from UNCONFIRMED_VIEW_BMS uvb union all select * from CONFIRMED_VIEW_BMS cvb union all select * from BMS b)  group by 
 	bid,mid,dxccadif order by 4,1,2,3;
 
-create view BMS_STATUS_VIEW_HUMAN as select distinct d.dxcc as DX,b.name as Band,m.name as Mode ,s.name as Status  from BMS_STATUS_VIEW bsv,Mode m, Band b, dxlist d, Status s  where 
+create view DX_STATUS as select distinct d.dxcc as DX,b.name as Band,m.name as Mode ,s.name as Status  from BMS_STATUS_VIEW bsv,Mode m, Band b, dxlist d, Status s  where 
 	m.mid = bsv.mid and 
 	s.sid = bsv.sid and 
 	d.dxccadif = bsv.dxccadif AND 

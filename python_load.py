@@ -26,9 +26,7 @@ BMS     = Base.classes.BMS
 # But we can pretend the View is a table 
 # These tables will not appear in Metadata
 #
-dxcc_status      = Table("dxcc_status", metadata, autoload_with=engine)
-CONFIRMED_VIEW   = Table("CONFIRMED_VIEW", metadata, autoload_with=engine)
-UNCONFIRMED_VIEW = Table("UNCONFIRMED_VIEW", metadata, autoload_with=engine)
+dxcc_status      = Table("DX_STATUS", metadata, autoload_with=engine)
 for mdtable in metadata.tables:
     print("Metadata", mdtable)
 
