@@ -132,3 +132,78 @@ Date format is Month/Day/Year
 ```sql
 select dxcc,count(*) from logbook where date='2/5/23' group by dxcc order by dxcc asc;
 ```
+
+
+
+# Confirmed and Unconfirmed Contacts 
+
+We start with copying the database 
+
+    cp ~/Documents/DV3A.rlog log.db
+    
+We now need to add some Tables/Views 
+
+	sqlite3 log.db < my_upgrade.sql 
+	
+At this point we need to generate some Data. we will do this in Python.
+
+This code - deleted everything in BMS table. Then for each DXCC, each Band, and Each Mode. Creates a record. Which has   a value of status = 0 (i.e. Not contacted).  The number of records is aprox 15,756. 
+
+
+```python
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine,MetaData
+from sqlalchemy import select,Table          #Needed for selecting data not mapping the Db
+from sqlalchemy.sql import text        #Needed for clearing BMS
+
+metadata = MetaData()
+Base = automap_base(metadata=metadata)
+
+# point the connection string to the database
+CONN_STR = 'sqlite:///log.db'
+engine = create_engine(CONN_STR)
+session = Session(engine)
+# reflect the tables
+Base.prepare(autoload_with=engine)
+# Now create an Alias to make the code look a little cleaner
+# We want to have a look at 2 tables. Logbook and dxlist
+Logbook = Base.classes.logbook
+Dxlist  = Base.classes.dxlist
+Band    = Base.classes.Band
+Mode    = Base.classes.Mode
+Status  = Base.classes.Status
+BMS     = Base.classes.BMS
+# 
+# As a View does not have a Primary key - SqlAlchemy is unable to reflect("Auto Add")
+# But we can pretend the View is a table 
+# These tables will not appear in Metadata
+#
+dxcc_status      = Table("dxcc_status", metadata, autoload_with=engine)
+CONFIRMED_VIEW   = Table("CONFIRMED_VIEW", metadata, autoload_with=engine)
+UNCONFIRMED_VIEW = Table("UNCONFIRMED_VIEW", metadata, autoload_with=engine)
+bs = session.execute(select(Band.bid)).all()
+
+ms = session.execute(select(Mode.mid)).all()
+ms=list(set(list(ms))) # This makes the mid values UNIQUE
+
+ss = session.execute(select(Status.sid).where(Status.name == "NOT WORKED")).all()
+# We now need the DXCC ID's 
+dxi = session.execute(select(Dxlist.dxccadif,Dxlist.dxcc)).all()
+# We will create a List of BMS objects - then add using the Session build add.
+
+session.execute(text('DELETE FROM BMS'))
+session.commit()
+print("BMS was truncated")
+ToAdd=[]
+for b in bs:
+    for m in ms:
+        for s in ss:
+            for d in dxi:
+              ToAdd.append(BMS(bid=b[0],mid=m[0],sid=s[0],dxccadif=d[0]))
+print(f"We have {len(ToAdd)} objects to Add.")
+session.add_all(ToAdd)
+session.commit()
+```
+
+
