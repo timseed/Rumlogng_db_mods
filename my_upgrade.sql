@@ -2,6 +2,8 @@ DROP TABLE IF EXISTS Band;
 DROP TABLE IF EXISTS Mode;
 DROP TABLE IF EXISTS Status;
 DROP TABLE IF EXISTS BMS;
+DROP VIEW  IF EXISTS MISSING_BANDS;
+DROP VIEW  IF EXISTS MISSING_LOTWSTATUS;
 DROP VIEW  IF EXISTS MISSING_MODES;
 DROP VIEW  IF EXISTS BMS_VIEW;
 DROP VIEW  IF EXISTS CONFIRMED_VIEW_BMS ;
@@ -24,6 +26,13 @@ CREATE TABLE BMS (bid Integer NOT NULL, mid Integer NOT NULL, sid Integer NOT NU
 
 CREATE VIEW MISSING_MODES as      
     SELECT MODE FROM logbook l WHERE NOT EXISTS (SELECT * from Mode m where m.logname=l.mode);
+
+CREATE VIEW MISSING_BANDS as
+	SELECT l.mode,l.BAND from logbook l where NOT EXISTS (select * from Band b where b.name=l.band);
+
+CREATE VIEW MISSING_LOTWSTATUS as 
+	SELECT l.mode,l.lotwqsl, l.callsign  from logbook l where NOT EXISTS (select * from Status s where s.code = l.lotwqsl );
+
 
 create view BMS_VIEW as select distinct dx.dxcc, bm.dxccadif,bm.mid, m.name, bm.sid, s.name, ' ',  b.name   from BMS bm, Band b, dxlist dx, Mode m, Status s  where 
 		b.bid  = bm.bid and 
