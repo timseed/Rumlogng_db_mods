@@ -3,6 +3,11 @@
 RumLog's data stores is sqlite3.... 
 Copy the Db before you 'play' with it....
 
+This code is my **TEST** code - to try and add some extra functionality to the Db. You will not be able to see anything
+inside the most excellent **RUMlogNG**, but I was thinking of a simple Web page to assist the overlay.
+
+Specifically these DB changes are to help me try and Track DXCC status, as I find the RUMlogNG codes rather confusing. 
+
 ## Copy Db 
 
     cp ~/Documents/DV3A.rlog log.db
@@ -137,6 +142,24 @@ select dxcc,count(*) from logbook where date='2/5/23' group by dxcc order by dxc
 
 # Confirmed and Unconfirmed Contacts 
 
+## Quick way 
+You need to edit the Makefile - to point to your Database.... a Copy will be taken and called **Qso.db**.
+
+
+     make clean 
+     make 
+     make setup 
+
+You now have done all the Db Changes, and you have a copy of your Data in a file called Qso.db 
+
+You can look at this  using sqlite3 
+
+    sqlite3 Qso.db 
+
+The table you are most interested in will be called *DX_STATUS*;
+
+## Manually 
+
 We start with copying the database 
 
     cp ~/Documents/DV3A.rlog log.db
@@ -179,9 +202,7 @@ BMS     = Base.classes.BMS
 # But we can pretend the View is a table 
 # These tables will not appear in Metadata
 #
-dxcc_status      = Table("dxcc_status", metadata, autoload_with=engine)
-CONFIRMED_VIEW   = Table("CONFIRMED_VIEW", metadata, autoload_with=engine)
-UNCONFIRMED_VIEW = Table("UNCONFIRMED_VIEW", metadata, autoload_with=engine)
+dxcc_status      = Table("DX_STATUS", metadata, autoload_with=engine)
 bs = session.execute(select(Band.bid)).all()
 
 ms = session.execute(select(Mode.mid)).all()
@@ -205,5 +226,8 @@ print(f"We have {len(ToAdd)} objects to Add.")
 session.add_all(ToAdd)
 session.commit()
 ```
+
+At this point you are in the same position as the 'automated' install.
+
 
 
