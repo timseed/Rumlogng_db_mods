@@ -1,21 +1,23 @@
 PYENV:=source ~/pe310/bin/activate
 DB:=Qso.db
 DB_SRC:=~/Documents/DV3A.rlog
-COPY:=$(shell cp $(DB_SRC) $(DB))
-DB_UPD:=$(shell sqlite3 $(DB)  < my_upgrade.sql > my_update.log)
-LOAD_DATA:=$(shell )
-.DEFAULT_GOAL := $(DB) 
 
-.PHONY: $(DB)
-$(DB): $(DB_SRC)
+.PHONY : $(DB)
+$(DB): 
 	$(info Copy $(DB))
-	$(COPY)
-	$(DB_UPD)
+	$(shell cp $(DB_SRC) $(DB))
+
+.PHONY: setup
+setup:
+	$(shell sqlite3 $(DB)  < my_upgrade.sql > my_update.log)
 	$(info DB stage finished)
 	($(PYENV);\
 		python3 python_load.py;\
 	  echo  Python Load finished;\
 		)
 
+
+.PHONY: clean 
 clean:
-		rm $(DB)
+		rm -f $(DB)
+		rm -f *.log
