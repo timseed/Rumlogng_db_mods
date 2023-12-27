@@ -230,4 +230,8 @@ session.commit()
 At this point you are in the same position as the 'automated' install.
 
 
+# Makefile 
 
+There is a makefile to carry out these steps. 
+
+All operations will take place using a copy of the RumLog database, and **NOT** using the original file. 
