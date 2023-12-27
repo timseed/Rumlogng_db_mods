@@ -7,7 +7,21 @@ This code is my **TEST** code - to try and add some extra functionality to the D
 inside the most excellent **RUMlogNG**, but I was thinking of a simple Web page to assist the overlay.
 
 Specifically these DB changes are to help me try and Track DXCC status, as I find the RUMlogNG codes rather confusing. 
+## Requirements
 
+Some back/zsh shell, plus the following software tools.
+
+  - Python3
+  - sqlite3 
+
+Python requires SqlAlchemy to be installed 
+
+    pip install Sqlalchemy 
+
+
+# These are the steps if done Manually
+
+This is how you can *step* through the process. However it may be advisable to use the **make** solution show lower if you want to try out. 
 ## Copy Db 
 
     cp ~/Documents/DV3A.rlog log.db
@@ -127,7 +141,19 @@ WHERE logbook .callsign = l2.callsign and
 
 ## Python to do this en-masse
 
+This is accomplished by using the makefile with the command
 
+    make fill_in_missing 
+
+This has done the following steps 
+
+   - Copied the Source Log file  locally a DateTime stamp name
+     - This file is not used or modified in ANY way
+  - Copied the Source Log file, locally as  Qso.db
+  - In the Qso.db - and fields from previous QSO's with a Station are updated.
+
+This means if you have worked M0FGC, 5 times - but for some reason (maybe importing Contest files ?) you only have their name written in 1 QSO log ... then all QSO's with M0FGC will not be updated. 
+This process is repeated for IOTA and State.
 
 
 ### How much DX On 1 day ?
@@ -232,6 +258,15 @@ At this point you are in the same position as the 'automated' install.
 
 # Makefile 
 
-There is a makefile to carry out these steps. 
+Just type **make** and the following steps happen.
+You can look inside the makefile for specific steps.
 
-All operations will take place using a copy of the RumLog database, and **NOT** using the original file. 
+  - all 
+    - Backups original
+    - Uses Qso.db locally
+      - fills in missing fields 
+      - Creates my QSL tracking structure
+      - Updates locally
+    - does not modify Original Log file at all 
+
+

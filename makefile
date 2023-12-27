@@ -9,6 +9,9 @@ all:
 	$(MAKE) fill_in_missing
 	$(MAKE) qsl_track_setup
 
+
+
+
 .PHONY: backup
 backup:
 	$(shell cp $(DB_SRC) $(NOW).db)
@@ -30,7 +33,7 @@ qsl_track_setup:
 		)
 
 .PHONY: fill_in_missing
-fill_in_missing:
+fill_in_missing: backup $(DB)
 	sqlite3 $(DB) < auto.sql > auto_results.txt
 	$(info Db Updated)
 
